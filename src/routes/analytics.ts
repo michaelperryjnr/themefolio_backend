@@ -10,6 +10,7 @@ interface PageViewRequest {
   userAgent: string;
   referrer: string;
   sessionId: string;
+  ip: string;
 }
 
 interface SessionRequest {
@@ -36,12 +37,13 @@ analyticsRouter.post(
   "/page-view",
   async (req: Request<{}, {}, PageViewRequest>, res: Response) => {
     try {
-      const { path, userAgent, referrer, sessionId } = req.body;
+      const { path, userAgent, referrer, sessionId, ip } = req.body;
       const pageView = new PageViewModel({
         path,
         userAgent,
         referrer,
         sessionId,
+        ip,
       });
 
       await pageView.save();
