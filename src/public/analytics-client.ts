@@ -79,15 +79,26 @@ class Analytics {
   }
 
   private async trackPageView(
-    path: string = window.location.pathname
+    path: string = typeof window !== "undefined"
+      ? window.location.pathname
+      : "/unknown"
   ): Promise<void> {
-    await this.makeRequest("page-view", {
-      path,
-      sessionId: this.sessionId,
-      userAgent: navigator.userAgent,
-      referrer: document.referrer || "Self search",
-      ip: (await this.getIpAddress()) || "0.0.0.0/self-searched",
-    });
+    try {
+      const ip = await this.getIpAddress();
+      await this.makeRequest("page-view", {
+        path,
+        sessionId: this.sessionId,
+        userAgent:
+          typeof navigator !== "undefined" ? navigator.userAgent : "Unknown",
+        referrer:
+          typeof document !== "undefined" && document.referrer
+            ? document.referrer
+            : "Self search",
+        ip,
+      });
+    } catch (error) {
+      this.logDebug("Error tracking page view:", error);
+    }
   }
 
   public async trackEvent(
@@ -139,13 +150,14 @@ class Analytics {
   }
 
   private async getIpAddress(): Promise<string> {
-    return fetch("https://api.ipify.org?format=json")
-      .then((response) => response.json())
-      .then((data) => data.ip)
-      .catch(() => {
-        this.logDebug("Failed to fetch IP address:");
-        return "Unknown";
-      });
+    try {
+      const response = await fetch("https://api.ipify.org?format=json");
+      const data = await response.json();
+      return data.ip || "0.0.0.0/self-searched";
+    } catch (error) {
+      this.logDebug("Failed to fetch IP address:", error);
+      return "0.0.0.0/self-searched";
+    }
   }
 }
 
