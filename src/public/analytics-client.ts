@@ -138,12 +138,8 @@ class Analytics {
   }
 }
 
-export default Analytics;
-
-/**
- * const analytics = new Analytics({
- *  apiUrl: "http://localhost:3000/analytics",
- * enableAutoPageView: true,
- * debug: true,
- * });
- */
+const analytics = new Analytics({
+  apiUrl: "https://api.thenittettey.live/analytics",
+  enableAutoPageView: true,
+  debug: false,
+});
