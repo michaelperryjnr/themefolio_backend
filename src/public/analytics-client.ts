@@ -84,7 +84,8 @@ class Analytics {
       : "/unknown"
   ): Promise<void> {
     try {
-      const ip = await this.getIpAddress();
+      //const ip = await this.getIpAddress();
+      const ip = "0.0.0.0/to-be-implemented";
       await this.makeRequest("page-view", {
         path,
         sessionId: this.sessionId,
