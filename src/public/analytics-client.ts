@@ -90,10 +90,7 @@ class Analytics {
         sessionId: this.sessionId,
         userAgent:
           typeof navigator !== "undefined" ? navigator.userAgent : "Unknown",
-        referrer:
-          typeof document !== "undefined" && document.referrer
-            ? document.referrer
-            : "Self search",
+        referrer: document.referrer || "Direct",
         ip,
       });
     } catch (error) {
@@ -153,7 +150,7 @@ class Analytics {
     try {
       const response = await fetch("https://api.ipify.org?format=json");
       const data = await response.json();
-      return data.ip || "0.0.0.0/self-searched";
+      return data.ip;
     } catch (error) {
       this.logDebug("Failed to fetch IP address:", error);
       return "0.0.0.0/self-searched";
