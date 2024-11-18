@@ -3,8 +3,13 @@ config();
 import { CorsOptions } from "cors";
 
 const corsOptions: CorsOptions = {
-  origin: ["theniitettey.live", "www.theniitettey.live", "localhost"],
+  origin: [
+    "https://theniitettey.live",
+    "https://www.theniitettey.live",
+    "http://localhost:5000",
+  ],
   methods: ["GET", "POST"],
+  allowedHeaders: ["Content-Type"],
 };
 
 const Config = {
