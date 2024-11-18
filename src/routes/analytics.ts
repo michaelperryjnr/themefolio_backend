@@ -1,5 +1,6 @@
 import { Router, Response, Request } from "express";
 import { EventModel, PageViewModel, SessionModel } from "../models";
+import authMiddleware from "../middlewares/authMiddleware";
 import { DeviceInfo, AnalyticsData, PageView, Session } from "../interfaces";
 // import { auth } from "../controllers";
 
@@ -101,7 +102,11 @@ interface DateRangeQuery {
 
 analyticsRouter.get(
   "/data",
-  async (req: Request<{}, {}, {}, DateRangeQuery>, res: Response) => {
+  authMiddleware,
+  async (
+    req: Request<{}, {}, {}, DateRangeQuery>,
+    res: Response
+  ): Promise<any> => {
     try {
       const { startDate, endDate } = req.query;
       const query: { timestamp?: { $gte: Date; $lte: Date } } = {};
