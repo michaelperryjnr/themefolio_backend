@@ -12,7 +12,7 @@ app.use("/api/auth", authRouter);
 app.use("/api/analytics", analyticsRouter);
 
 app.get("/api/dashboard", (req: Request, res: Response) => {
-  res.sendFile(path.join(__dirname, "public", "dashboard.html"));
+  res.sendFile(path.join(__dirname, "../src/public", "dashboard.html"));
 });
 
 app.get("/api/status", (req: Request, res: Response) => {
