@@ -1,7 +1,7 @@
 import { Router, Response, Request } from "express";
 import { EventModel, PageViewModel, SessionModel } from "../models";
 import { DeviceInfo, AnalyticsData, PageView, Session } from "../interfaces";
-import { auth } from "../controllers";
+// import { auth } from "../controllers";
 
 const analyticsRouter = Router();
 interface PageViewRequest {
