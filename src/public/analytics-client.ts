@@ -257,7 +257,7 @@ class Analytics {
   }
 
   private async getIpAddress(): Promise<string> {
-    return randomBytes(8).toString("hex");
+    return `User-Protected-IP-x.x.x.x`;
   }
 }
 
