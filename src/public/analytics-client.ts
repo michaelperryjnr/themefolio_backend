@@ -1,14 +1,9 @@
+import { randomBytes } from "crypto";
+
 interface DeviceInfo {
   browser: string;
   os: string;
   device: string;
-}
-
-interface AnalyticsEvent {
-  sessionId: string;
-  eventType: string;
-  eventData: Record<string, unknown>;
-  timestamp?: Date;
 }
 
 interface AnalyticsConfig {
@@ -21,8 +16,6 @@ class Analytics {
   private readonly apiUrl: string;
   private readonly sessionId: string;
   private readonly debug: boolean;
-  private eventQueue: AnalyticsEvent[] = [];
-  private flushInterval: number;
 
   constructor(config: AnalyticsConfig) {
     this.apiUrl = config.apiUrl;
@@ -31,15 +24,9 @@ class Analytics {
 
     this.initSession();
 
-    // Only track page view if auto tracking is enabled
     if (config.enableAutoPageView) {
       this.trackPageView();
     }
-
-    this.listenForEvents();
-
-    // Set up batch sending every 30 seconds
-    this.flushInterval = window.setInterval(() => this.flushEvents(), 30000);
   }
 
   private generateSessionId(): string {
@@ -53,6 +40,7 @@ class Analytics {
     );
   }
 
+  // Log debug messages if enabled
   private logDebug(...args: unknown[]): void {
     if (this.debug) {
       console.log("[Analytics]", ...args);
@@ -91,10 +79,127 @@ class Analytics {
       sessionId: this.sessionId,
       deviceInfo,
     });
+
+    await this.trackLogin();
+
+    await this.trackReturn();
   }
 
-  // Track page views but not as events
-  public async trackPageView(
+  public async trackLogin(): Promise<void> {
+    const currentTime = new Date().toISOString();
+    const lastEventTime = localStorage.getItem("lastEventTime");
+
+    let timeDifference = "First visit";
+    if (lastEventTime) {
+      const lastEventDate = new Date(lastEventTime);
+      const diffInMs = new Date().getTime() - lastEventDate.getTime();
+      const diffInMinutes = Math.floor(diffInMs / (1000 * 60));
+      const diffInHours = Math.floor(diffInMinutes / 60);
+      const diffInDays = Math.floor(diffInHours / 24);
+
+      timeDifference = `${diffInDays} days, ${diffInHours % 24} hours, ${
+        diffInMinutes % 60
+      } minutes`;
+    }
+
+    localStorage.setItem("lastEventTime", currentTime);
+
+    await this.makeRequest("event", {
+      sessionId: this.sessionId,
+      eventType: "Login",
+      eventData: {
+        timeDifference,
+        isReturningUser: lastEventTime ? true : false,
+      },
+    });
+
+    this.logDebug("Tracked login event.");
+  }
+
+  public async trackLogout(): Promise<void> {
+    const currentTime = new Date().toISOString();
+    const lastEventTime = localStorage.getItem("lastEventTime");
+
+    let timeDifference = "First visit";
+    if (lastEventTime) {
+      const lastEventDate = new Date(lastEventTime);
+      const diffInMs = new Date().getTime() - lastEventDate.getTime();
+      const diffInMinutes = Math.floor(diffInMs / (1000 * 60));
+      const diffInHours = Math.floor(diffInMinutes / 60);
+      const diffInDays = Math.floor(diffInHours / 24);
+
+      timeDifference = `${diffInDays} days, ${diffInHours % 24} hours, ${
+        diffInMinutes % 60
+      } minutes`;
+    }
+
+    localStorage.setItem("lastEventTime", currentTime);
+
+    await this.makeRequest("event", {
+      sessionId: this.sessionId,
+      eventType: "Logout",
+      eventData: {
+        timeDifference,
+        isReturningUser: lastEventTime ? true : false,
+      },
+    });
+
+    this.logDebug("Tracked logout event.");
+  }
+
+  public async trackPageVisit(path: string = "/unknown"): Promise<void> {
+    try {
+      const ip = await this.getIpAddress();
+      await this.makeRequest("event", {
+        sessionId: this.sessionId,
+        eventType: "Visit Page",
+        eventData: {
+          path,
+          userAgent:
+            typeof navigator !== "undefined" ? navigator.userAgent : "Unknown",
+          referrer: document.referrer || "Direct",
+          ip,
+        },
+      });
+
+      this.logDebug("Tracked page visit event.");
+    } catch (error) {
+      this.logDebug("Error tracking page visit:", error);
+    }
+  }
+
+  public async trackReturn(): Promise<void> {
+    const lastEventTime = localStorage.getItem("lastEventTime");
+    const currentTime = new Date().toISOString();
+
+    let timeDifference = "First visit";
+    if (lastEventTime) {
+      const lastEventDate = new Date(lastEventTime);
+      const diffInMs = new Date().getTime() - lastEventDate.getTime();
+      const diffInMinutes = Math.floor(diffInMs / (1000 * 60));
+      const diffInHours = Math.floor(diffInMinutes / 60);
+      const diffInDays = Math.floor(diffInHours / 24);
+
+      timeDifference = `${diffInDays} days, ${diffInHours % 24} hours, ${
+        diffInMinutes % 60
+      } minutes`;
+    }
+
+    if (lastEventTime) {
+      await this.makeRequest("event", {
+        sessionId: this.sessionId,
+        eventType: "Return",
+        eventData: {
+          timeDifference,
+          isReturningUser: true,
+        },
+      });
+
+      this.logDebug("Tracked return event.");
+    }
+  }
+
+  private async trackPageView(
     path: string = typeof window !== "undefined"
       ? window.location.pathname
       : "/unknown"
@@ -112,59 +217,6 @@ class Analytics {
     } catch (error) {
       this.logDebug("Error tracking page view:", error);
     }
-  }
-
-  public trackEvent(
-    eventType: string,
-    eventData: Record<string, unknown> = {}
-  ): void {
-    const event: AnalyticsEvent = {
-      sessionId: this.sessionId,
-      eventType,
-      eventData,
-    };
-
-    this.eventQueue.push(event);
-    this.logDebug("Tracked event:", event);
-  }
-
-  private async flushEvents(): Promise<void> {
-    if (this.eventQueue.length > 0) {
-      const eventsToSend = [...this.eventQueue];
-      this.eventQueue = [];
-
-      try {
-        await this.makeRequest("event", { events: eventsToSend });
-        this.logDebug("Flushed events:", eventsToSend);
-      } catch (error) {
-        this.logDebug("Failed to flush events, re-queuing:", error);
-        this.eventQueue.push(...eventsToSend);
-      }
-    }
-  }
-
-  private listenForEvents(): void {
-    document.addEventListener("click", (event) => {
-      const target = event.target as HTMLElement;
-      const eventData = {
-        tagName: target.tagName,
-        id: target.id || null,
-        classList: Array.from(target.classList),
-        x: event.clientX,
-        y: event.clientY,
-      };
-      this.trackEvent("click", eventData);
-    });
-
-    document.addEventListener("keypress", (event) => {
-      const eventData = {
-        key: event.key,
-        code: event.code,
-      };
-      this.trackEvent("keypress", eventData);
-    });
-
-    this.logDebug("Event listeners for clicks and keypresses attached.");
   }
 
   private getBrowserInfo(): string {
@@ -205,14 +257,7 @@ class Analytics {
   }
 
   private async getIpAddress(): Promise<string> {
-    try {
-      const response = await fetch("https://api.ipify.org?format=json");
-      const data = await response.json();
-      return data.ip;
-    } catch (error) {
-      this.logDebug("Failed to fetch IP address:", error);
-      return "0.0.0.0/self-searched";
-    }
+    return randomBytes(8).toString("hex");
   }
 }
 
@@ -220,4 +265,26 @@ const analytics = new Analytics({
   apiUrl: "https://api.theniitettey.live/analytics",
   enableAutoPageView: true,
   debug: false,
+});
+
+window.addEventListener("beforeunload", async () => {
+  await analytics.trackLogout();
+});
+
+window.addEventListener("load", async () => {
+  await analytics.trackLogin();
+});
+
+window.addEventListener("popstate", async () => {
+  await analytics.trackPageVisit(window.location.pathname);
+});
+
+window.addEventListener("hashchange", async () => {
+  await analytics.trackPageVisit(window.location.pathname);
+});
+
+window.addEventListener("click", async (event) => {
+  if (event.target instanceof HTMLAnchorElement) {
+    await analytics.trackPageVisit(event.target.href);
+  }
 });
