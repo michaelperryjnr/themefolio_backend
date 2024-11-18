@@ -8,7 +8,7 @@ interface AnalyticsEvent {
   sessionId: string;
   eventType: string;
   eventData: Record<string, unknown>;
-  timestamp: Date;
+  timestamp?: Date;
 }
 
 interface AnalyticsConfig {
@@ -31,6 +31,7 @@ class Analytics {
 
     this.initSession();
 
+    // Only track page view if auto tracking is enabled
     if (config.enableAutoPageView) {
       this.trackPageView();
     }
@@ -92,6 +93,7 @@ class Analytics {
     });
   }
 
+  // Track page views but not as events
   public async trackPageView(
     path: string = typeof window !== "undefined"
       ? window.location.pathname
@@ -120,7 +122,6 @@ class Analytics {
       sessionId: this.sessionId,
       eventType,
       eventData,
-      timestamp: new Date(),
     };
 
     this.eventQueue.push(event);
@@ -215,9 +216,8 @@ class Analytics {
   }
 }
 
-// Example Usage
 const analytics = new Analytics({
   apiUrl: "https://api.theniitettey.live/analytics",
   enableAutoPageView: true,
-  debug: true,
+  debug: false,
 });
