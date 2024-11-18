@@ -1,5 +1,7 @@
 import { generateAccessToken, verifyAccessToken } from "./tokenContoller";
 import { Request, Response, NextFunction } from "express";
+import bcrypt from "bcrypt";
+import { hash } from "crypto";
 
 const auth = {
   generateAccessToken,
@@ -17,6 +19,9 @@ const auth = {
     } catch (error) {
       res.status(401).send("Invalid token");
     }
+  },
+  async verifyPassword(password: string, hash: string) {
+    return await bcrypt.compare(password, hash);
   },
 };
 
