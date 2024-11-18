@@ -8,14 +8,14 @@ const app = express();
 
 app.use(express.json());
 app.use(cors(Config.corsOptions));
-app.use("/api/auth", authRouter);
-app.use("/api/analytics", analyticsRouter);
+app.use("/auth", authRouter);
+app.use("/analytics", analyticsRouter);
 
-app.get("/api/dashboard", (req: Request, res: Response) => {
+app.get("/dashboard", (req: Request, res: Response) => {
   res.sendFile(path.join(__dirname, "../src/public", "dashboard.html"));
 });
 
-app.get("/api/status", (req: Request, res: Response) => {
+app.get("/status", (req: Request, res: Response) => {
   const statuses = ["Operational", "Degraded", "Maintenance", "Offline"];
 
   const randomIndex = Math.floor(Math.random() * statuses.length);
