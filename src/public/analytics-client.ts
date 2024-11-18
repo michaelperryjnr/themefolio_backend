@@ -86,7 +86,7 @@ class Analytics {
       sessionId: this.sessionId,
       userAgent: navigator.userAgent,
       referrer: document.referrer || "Self search",
-      ip: await this.getIpAddress(),
+      ip: (await this.getIpAddress()) || "0.0.0.0/self-searched",
     });
   }
 
