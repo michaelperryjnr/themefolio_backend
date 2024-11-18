@@ -36,4 +36,12 @@ interface AnalyticsData {
   averageSessionDuration: number;
 }
 
-export { DeviceInfo, Session, PageView, AnalyticsEvent, AnalyticsData };
+interface User {
+  username: string;
+  password: string;
+  createdAt: Date;
+  updatedAt: Date;
+  isAdmin: boolean;
+}
+
+export { DeviceInfo, Session, PageView, AnalyticsEvent, AnalyticsData, User };
