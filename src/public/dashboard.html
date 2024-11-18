@@ -27,8 +27,8 @@
 
 <body class="bg-gray-100 dark:bg-dark-bg transition-colors duration-200">
     <!-- Login Screen -->
-    <div id="loginScreen" class="min-h-screen flex items-center justify-center">
-        <div class="bg-white dark:bg-dark-card p-8 rounded-lg shadow-md w-96">
+    <div id="loginScreen" class="min-h-screen flex items-center justify-center p-4">
+        <div class="bg-white dark:bg-dark-card p-6 sm:p-8 rounded-lg shadow-md w-full max-w-md">
             <h2 class="text-2xl font-bold mb-6 text-center text-gray-900 dark:text-dark-text">Analytics Dashboard</h2>
             <form id="loginForm" class="space-y-4">
                 <div>
@@ -65,7 +65,7 @@
 
     <!-- Dashboard -->
     <div id="dashboard" class="hidden min-h-screen bg-gray-100 dark:bg-dark-bg">
-        <nav class="bg-white dark:bg-dark-card shadow-md">
+        <nav class="bg-white dark:bg-dark-card shadow-md sticky top-0 z-10">
             <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 <div class="flex justify-between h-16">
                     <div class="flex items-center">
@@ -87,66 +87,85 @@
             </div>
         </nav>
 
-        <main class="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
+        <main class="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
             <div class="mb-6 bg-white dark:bg-dark-card rounded-lg shadow p-4">
-                <div class="flex space-x-4">
-                    <div>
+                <div class="flex flex-col sm:flex-row space-y-4 sm:space-y-0 sm:space-x-4">
+                    <div class="flex-1">
                         <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Start Date</label>
                         <input type="date" id="startDate"
-                            class="mt-1 block rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                            class="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm focus:border-blue-500 focus:ring-blue-500">
                     </div>
-                    <div>
+                    <div class="flex-1">
                         <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">End Date</label>
                         <input type="date" id="endDate"
-                            class="mt-1 block rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                            class="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm focus:border-blue-500 focus:ring-blue-500">
                     </div>
                     <div class="flex items-end">
                         <button id="updateDateRange"
-                            class="bg-blue-500 text-white py-2 px-4 rounded-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">
+                            class="w-full sm:w-auto bg-blue-500 text-white py-2 px-4 rounded-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">
                             Update
                         </button>
                     </div>
                 </div>
             </div>
 
-            <div class="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4 mb-6">
-                <div class="bg-white dark:bg-dark-card rounded-lg shadow p-6">
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-6">
+                <div class="bg-white dark:bg-dark-card rounded-lg shadow p-4 sm:p-6">
                     <h3 class="text-gray-500 dark:text-gray-400 text-sm font-medium">Total Page Views</h3>
-                    <p id="totalPageViews" class="mt-2 text-3xl font-bold text-gray-900 dark:text-dark-text">-</p>
+                    <p id="totalPageViews"
+                        class="mt-2 text-2xl sm:text-3xl font-bold text-gray-900 dark:text-dark-text">-</p>
                 </div>
-                <div class="bg-white dark:bg-dark-card rounded-lg shadow p-6">
+                <div class="bg-white dark:bg-dark-card rounded-lg shadow p-4 sm:p-6">
                     <h3 class="text-gray-500 dark:text-gray-400 text-sm font-medium">Total Sessions</h3>
-                    <p id="totalSessions" class="mt-2 text-3xl font-bold text-gray-900 dark:text-dark-text">-</p>
+                    <p id="totalSessions" class="mt-2 text-2xl sm:text-3xl font-bold text-gray-900 dark:text-dark-text">
+                        -</p>
                 </div>
-                <div class="bg-white dark:bg-dark-card rounded-lg shadow p-6">
+                <div class="bg-white dark:bg-dark-card rounded-lg shadow p-4 sm:p-6">
                     <h3 class="text-gray-500 dark:text-gray-400 text-sm font-medium">Avg Session Duration</h3>
-                    <p id="avgSessionDuration" class="mt-2 text-3xl font-bold text-gray-900 dark:text-dark-text">-</p>
+                    <p id="avgSessionDuration"
+                        class="mt-2 text-2xl sm:text-3xl font-bold text-gray-900 dark:text-dark-text">-</p>
                 </div>
-                <div class="bg-white dark:bg-dark-card rounded-lg shadow p-6">
+                <div class="bg-white dark:bg-dark-card rounded-lg shadow p-4 sm:p-6">
                     <h3 class="text-gray-500 dark:text-gray-400 text-sm font-medium">Total Events</h3>
-                    <p id="totalEvents" class="mt-2 text-3xl font-bold text-gray-900 dark:text-dark-text">-</p>
+                    <p id="totalEvents" class="mt-2 text-2xl sm:text-3xl font-bold text-gray-900 dark:text-dark-text">-
+                    </p>
                 </div>
             </div>
 
             <div class="grid grid-cols-1 gap-6 lg:grid-cols-2">
-                <div class="bg-white dark:bg-dark-card rounded-lg shadow p-6">
+                <div class="bg-white dark:bg-dark-card rounded-lg shadow p-4 sm:p-6">
                     <h3 class="text-lg font-medium text-gray-900 dark:text-dark-text mb-4">Page Views Over Time</h3>
-                    <canvas id="pageViewsChart"></canvas>
+                    <div class="h-64 sm:h-80">
+                        <canvas id="pageViewsChart"></canvas>
+                    </div>
                 </div>
-                <div class="bg-white dark:bg-dark-card rounded-lg shadow p-6">
+                <div class="bg-white dark:bg-dark-card rounded-lg shadow p-4 sm:p-6">
                     <h3 class="text-lg font-medium text-gray-900 dark:text-dark-text mb-4">Popular Pages</h3>
-                    <canvas id="popularPagesChart"></canvas>
+                    <div class="h-64 sm:h-80">
+                        <canvas id="popularPagesChart"></canvas>
+                    </div>
                 </div>
             </div>
         </main>
     </div>
 
     <script>
-
         let token = localStorage.getItem('analyticsToken');
         let pageViewsChart = null;
         let popularPagesChart = null;
         let isDark = localStorage.getItem('theme') === 'dark';
+
+        // Set default dates if none are specified
+        function setDefaultDates() {
+            const endDate = new Date();
+            const startDate = new Date();
+            startDate.setDate(startDate.getDate() - 30); // Default to last 30 days
+
+            document.getElementById('startDate').value = startDate.toISOString().split('T')[0];
+            document.getElementById('endDate').value = endDate.toISOString().split('T')[0];
+        }
+
+        setDefaultDates();
 
         function setTheme(dark) {
             isDark = dark;
@@ -190,6 +209,8 @@
 
                 if (response.ok) {
                     const data = await response.json();
+                    token = data.token;
+                    localStorage.setItem('analyticsToken', token);
                     localStorage.setItem('username', data.user.username);
                     showDashboard();
                     loadAnalyticsData();
@@ -205,92 +226,235 @@
 
         document.getElementById('logoutBtn').addEventListener('click', () => {
             localStorage.removeItem('analyticsToken');
+            localStorage.removeItem('username');
+            token = null;
             showLoginScreen();
         });
 
         document.getElementById('updateDateRange').addEventListener('click', loadAnalyticsData);
 
+        // Add window resize handler for responsive charts
+        let resizeTimeout;
+        window.addEventListener('resize', () => {
+            clearTimeout(resizeTimeout);
+            resizeTimeout = setTimeout(() => {
+                if (pageViewsChart) loadAnalyticsData();
+            }, 250);
+        });
+
         function showDashboard() {
             document.getElementById('loginScreen').classList.add('hidden');
             document.getElementById('dashboard').classList.remove('hidden');
+            // Set up automatic refresh every 5 minutes
+            setInterval(loadAnalyticsData, 5 * 60 * 1000);
         }
 
         function showLoginScreen() {
             document.getElementById('dashboard').classList.add('hidden');
             document.getElementById('loginScreen').classList.remove('hidden');
         }
-
         async function loadAnalyticsData() {
-            if (!token) return;
-
-            const startDate = document.getElementById('startDate').value;
-            const endDate = document.getElementById('endDate').value;
-
             try {
-                const response = await fetch(`/analytics/data?startDate=${startDate}&endDate=${endDate}`, {
-                    credentials: 'include',
-                    headers: { 'Authorization': `Bearer ${token}` }
-                });
+                const startDate = document.getElementById('startDate').value ||
+                    new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+                const endDate = document.getElementById('endDate').value ||
+                    new Date().toISOString().split('T')[0];
+
+                const response = await fetch(
+                    `/analytics/data?startDate=${startDate}&endDate=${endDate}`,
+                    {
+                        credentials: 'include',
+                        headers: {
+                            'Authorization': `Bearer ${token}`,
+                            'Content-Type': 'application/json'
+                        }
+                    }
+                );
 
                 if (response.ok) {
                     const data = await response.json();
+                    console.log('Analytics data:', data);
                     updateDashboard(data);
-                } else {
-                    if (response.status === 401) {
-                        localStorage.removeItem('analyticsToken');
-                        showLoginScreen();
-                    }
+                    return;
                 }
+
+                if (response.status === 401) {
+                    // Token has expired or is invalid
+                    showLoginScreen();
+                    return;
+                }
+
+                throw new Error(`Failed to load data: ${response.status}`);
+
             } catch (error) {
                 console.error('Failed to load analytics data:', error);
+                showError('Failed to load analytics data. Please try again.');
             }
         }
 
-        function updateDashboard(data) {
-            document.getElementById('totalPageViews').textContent = data.totalPageViews;
-            document.getElementById('totalSessions').textContent = data.totalSessions;
-            document.getElementById('avgSessionDuration').textContent = `${Math.round(data.averageSessionDuration / 1000 / 60)}m`;
-            document.getElementById('totalEvents').textContent = data.totalEvents;
+        // Helper function to show errors
+        function showError(message) {
+            const errorToast = document.createElement('div');
+            errorToast.className =
+                'fixed bottom-4 right-4 bg-red-500 text-white px-6 py-3 rounded-lg shadow-lg transition-opacity duration-500';
+            errorToast.textContent = message;
+            document.body.appendChild(errorToast);
 
-            updatePageViewsChart(data.pageViewsOverTime);
-            updatePopularPagesChart(data.popularPages);
+            // Fade out and remove after delay
+            setTimeout(() => {
+                errorToast.style.opacity = '0';
+                setTimeout(() => errorToast.remove(), 500);
+            }, 3000);
+        }
+        function updateDashboard(data) {
+            // Ensure data has expected structure with defaults
+            const sanitizedData = {
+                totalPageViews: data.totalPageViews || 0,
+                totalSessions: data.totalSessions || 0,
+                averageSessionDuration: data.averageSessionDuration || 0,
+                totalEvents: data.totalEvents || 0,
+                pageViewsOverTime: data.pageViewsOverTime || [],
+                popularPages: Array.isArray(data.popularPages) ? data.popularPages : []
+            };
+
+            const metrics = ['totalPageViews', 'totalSessions', 'avgSessionDuration', 'totalEvents'];
+            metrics.forEach(metric => {
+                const element = document.getElementById(metric);
+                if (!element) return;
+                element.classList.add('animate-pulse');
+            });
+
+            setTimeout(() => {
+                metrics.forEach(metric => {
+                    const element = document.getElementById(metric);
+                    if (!element) return;
+
+                    let value = '';
+                    switch (metric) {
+                        case 'totalPageViews':
+                            value = formatNumber(sanitizedData.totalPageViews);
+                            break;
+                        case 'totalSessions':
+                            value = formatNumber(sanitizedData.totalSessions);
+                            break;
+                        case 'avgSessionDuration':
+                            value = formatDuration(sanitizedData.averageSessionDuration);
+                            break;
+                        case 'totalEvents':
+                            value = formatNumber(sanitizedData.totalEvents);
+                            break;
+                    }
+
+                    element.textContent = value;
+                    element.classList.remove('animate-pulse');
+                });
+            }, 300);
+
+            updatePageViewsChart(sanitizedData.pageViewsOverTime || []);
+            updatePopularPagesChart(sanitizedData.popularPages);
+        }
+
+
+        function formatNumber(num) {
+            if (!num && num !== 0) return '0';
+
+            if (num >= 1000000) {
+                return (num / 1000000).toFixed(1) + 'M';
+            }
+            if (num >= 1000) {
+                return (num / 1000).toFixed(1) + 'K';
+            }
+            return num.toString();
+        }
+
+        function formatDuration(ms) {
+            if (!ms && ms !== 0) return '0m';
+
+            const minutes = Math.round(ms / 1000 / 60);
+            if (minutes >= 60) {
+                const hours = Math.floor(minutes / 60);
+                const mins = minutes % 60;
+                return `${hours}h ${mins}m`;
+            }
+            return `${minutes}m`;
         }
 
         function getChartTheme() {
             return {
                 color: isDark ? '#fff' : '#666',
-                grid: { color: isDark ? '#444' : '#ddd' }
+                grid: { color: isDark ? '#444' : '#ddd' },
+                font: {
+                    family: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif'
+                }
             };
         }
 
         function updatePageViewsChart(data) {
             const ctx = document.getElementById('pageViewsChart');
+            if (!ctx) return;
+
             const theme = getChartTheme();
 
             if (pageViewsChart) {
                 pageViewsChart.destroy();
             }
 
+            // If no pageViewsOverTime data, create empty chart
+            const chartData = data.length ? data : [{ date: new Date(), count: 0 }];
+
             pageViewsChart = new Chart(ctx, {
                 type: 'line',
                 data: {
-                    labels: data.map(d => d.date),
+                    labels: chartData.map(d => new Date(d.date).toLocaleDateString()),
                     datasets: [{
                         label: 'Page Views',
-                        data: data.map(d => d.count),
+                        data: chartData.map(d => d.count),
                         borderColor: 'rgb(59, 130, 246)',
-                        tension: 0.1
+                        backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                        tension: 0.1,
+                        fill: true
                     }]
                 },
                 options: {
                     responsive: true,
                     maintainAspectRatio: false,
+                    interaction: {
+                        intersect: false,
+                        mode: 'index'
+                    },
                     plugins: {
-                        legend: { labels: { color: theme.color } }
+                        legend: {
+                            labels: {
+                                color: theme.color,
+                                font: theme.font
+                            }
+                        },
+                        tooltip: {
+                            backgroundColor: isDark ? 'rgba(0, 0, 0, 0.8)' : 'rgba(255, 255, 255, 0.8)',
+                            titleColor: isDark ? '#fff' : '#000',
+                            bodyColor: isDark ? '#fff' : '#000',
+                            borderColor: isDark ? '#444' : '#ddd',
+                            borderWidth: 1
+                        }
                     },
                     scales: {
-                        x: { grid: { color: theme.grid.color }, ticks: { color: theme.color } },
-                        y: { grid: { color: theme.grid.color }, ticks: { color: theme.color } }
+                        x: {
+                            grid: { color: theme.grid.color },
+                            ticks: {
+                                color: theme.color,
+                                font: theme.font,
+                                maxRotation: 45,
+                                minRotation: 45
+                            }
+                        },
+                        y: {
+                            grid: { color: theme.grid.color },
+                            ticks: {
+                                color: theme.color,
+                                font: theme.font,
+                                callback: value => formatNumber(value)
+                            }
+                        }
                     }
                 }
             });
@@ -298,20 +462,35 @@
 
         function updatePopularPagesChart(data) {
             const ctx = document.getElementById('popularPagesChart');
+            if (!ctx) return;
+
             const theme = getChartTheme();
 
             if (popularPagesChart) {
                 popularPagesChart.destroy();
             }
 
+            const truncatePath = (path) => {
+                if (!path) return 'Unknown';
+                if (path.length > 30) {
+                    return path.substring(0, 27) + '...';
+                }
+                return path;
+            };
+
+            // Ensure data is in the correct format and not empty
+            const chartData = Array.isArray(data) && data.length > 0 ?
+                data : [['No data', 0]];
+
             popularPagesChart = new Chart(ctx, {
                 type: 'bar',
                 data: {
-                    labels: data.map(([path]) => path),
+                    labels: chartData.map(([path]) => truncatePath(path)),
                     datasets: [{
                         label: 'Views',
-                        data: data.map(([, count]) => count),
-                        backgroundColor: 'rgb(59, 130, 246)'
+                        data: chartData.map(([, count]) => count || 0),
+                        backgroundColor: 'rgb(59, 130, 246)',
+                        borderRadius: 4
                     }]
                 },
                 options: {
@@ -319,16 +498,44 @@
                     maintainAspectRatio: false,
                     indexAxis: 'y',
                     plugins: {
-                        legend: { labels: { color: theme.color } }
+                        legend: {
+                            labels: {
+                                color: theme.color,
+                                font: theme.font
+                            }
+                        },
+                        tooltip: {
+                            backgroundColor: isDark ? 'rgba(0, 0, 0, 0.8)' : 'rgba(255, 255, 255, 0.8)',
+                            titleColor: isDark ? '#fff' : '#000',
+                            bodyColor: isDark ? '#fff' : '#000',
+                            callbacks: {
+                                title: (items) => {
+                                    const originalPath = chartData[items[0].dataIndex][0];
+                                    return originalPath || 'Unknown';
+                                }
+                            }
+                        }
                     },
                     scales: {
-                        x: { grid: { color: theme.grid.color }, ticks: { color: theme.color } },
-                        y: { grid: { color: theme.grid.color }, ticks: { color: theme.color } }
+                        x: {
+                            grid: { color: theme.grid.color },
+                            ticks: {
+                                color: theme.color,
+                                font: theme.font,
+                                callback: value => formatNumber(value)
+                            }
+                        },
+                        y: {
+                            grid: { color: theme.grid.color },
+                            ticks: {
+                                color: theme.color,
+                                font: theme.font
+                            }
+                        }
                     }
                 }
             });
         }
-
         if (token) {
             showDashboard();
             loadAnalyticsData();

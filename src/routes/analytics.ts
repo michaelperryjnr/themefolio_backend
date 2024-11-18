@@ -120,17 +120,29 @@ analyticsRouter.get(
         };
       }
 
+      let analytics;
+
       const pageViews = await PageViewModel.find(query);
       const sessions = await SessionModel.find(query);
       const events = await EventModel.find(query);
 
-      const analytics: AnalyticsData = {
-        totalPageViews: pageViews.length,
-        totalSessions: sessions.length,
-        totalEvents: events.length,
-        popularPages: aggregatePopularPages(pageViews),
-        averageSessionDuration: calculateAverageSessionDuration(sessions),
-      };
+      if (!pageViews.length && !sessions.length && !events.length) {
+        const allPageViews = await PageViewModel.find();
+        const allSessions = await SessionModel.find();
+        const allEvents = await EventModel.find();
+
+        analytics = {
+          popularPages: aggregatePopularPages(allPageViews),
+          averageSessionDuration: calculateAverageSessionDuration(allSessions),
+          totalEvents: allEvents.length,
+        };
+      } else {
+        analytics = {
+          popularPages: aggregatePopularPages(pageViews),
+          averageSessionDuration: calculateAverageSessionDuration(sessions),
+          totalEvents: events.length,
+        };
+      }
       res.status(200).json(analytics);
     } catch (error) {
       errorHandler(error as Error, res);

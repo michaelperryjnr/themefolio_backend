@@ -4,6 +4,13 @@ interface DeviceInfo {
   device: string;
 }
 
+interface AnalyticsEvent {
+  sessionId: string;
+  eventType: string;
+  eventData: Record<string, unknown>;
+  timestamp: Date;
+}
+
 interface AnalyticsConfig {
   apiUrl: string;
   enableAutoPageView?: boolean;
@@ -14,6 +21,8 @@ class Analytics {
   private readonly apiUrl: string;
   private readonly sessionId: string;
   private readonly debug: boolean;
+  private eventQueue: AnalyticsEvent[] = [];
+  private flushInterval: number;
 
   constructor(config: AnalyticsConfig) {
     this.apiUrl = config.apiUrl;
@@ -21,9 +30,15 @@ class Analytics {
     this.debug = config.debug || false;
 
     this.initSession();
+
     if (config.enableAutoPageView) {
       this.trackPageView();
     }
+
+    this.listenForEvents();
+
+    // Set up batch sending every 30 seconds
+    this.flushInterval = window.setInterval(() => this.flushEvents(), 30000);
   }
 
   private generateSessionId(): string {
@@ -54,8 +69,7 @@ class Analytics {
       });
 
       if (!response.ok) {
-        throw new Error(`
-            HTTP Error: ${response.statusText}`);
+        throw new Error(`HTTP Error: ${response.statusText}`);
       }
 
       this.logDebug(`${endpoint} tracked successfully`);
@@ -78,7 +92,7 @@ class Analytics {
     });
   }
 
-  private async trackPageView(
+  public async trackPageView(
     path: string = typeof window !== "undefined"
       ? window.location.pathname
       : "/unknown"
@@ -98,15 +112,58 @@ class Analytics {
     }
   }
 
-  public async trackEvent(
+  public trackEvent(
     eventType: string,
     eventData: Record<string, unknown> = {}
-  ): Promise<void> {
-    await this.makeRequest("event", {
+  ): void {
+    const event: AnalyticsEvent = {
       sessionId: this.sessionId,
       eventType,
       eventData,
+      timestamp: new Date(),
+    };
+
+    this.eventQueue.push(event);
+    this.logDebug("Tracked event:", event);
+  }
+
+  private async flushEvents(): Promise<void> {
+    if (this.eventQueue.length > 0) {
+      const eventsToSend = [...this.eventQueue];
+      this.eventQueue = [];
+
+      try {
+        await this.makeRequest("event", { events: eventsToSend });
+        this.logDebug("Flushed events:", eventsToSend);
+      } catch (error) {
+        this.logDebug("Failed to flush events, re-queuing:", error);
+        this.eventQueue.push(...eventsToSend);
+      }
+    }
+  }
+
+  private listenForEvents(): void {
+    document.addEventListener("click", (event) => {
+      const target = event.target as HTMLElement;
+      const eventData = {
+        tagName: target.tagName,
+        id: target.id || null,
+        classList: Array.from(target.classList),
+        x: event.clientX,
+        y: event.clientY,
+      };
+      this.trackEvent("click", eventData);
     });
+
+    document.addEventListener("keypress", (event) => {
+      const eventData = {
+        key: event.key,
+        code: event.code,
+      };
+      this.trackEvent("keypress", eventData);
+    });
+
+    this.logDebug("Event listeners for clicks and keypresses attached.");
   }
 
   private getBrowserInfo(): string {
@@ -158,8 +215,9 @@ class Analytics {
   }
 }
 
+// Example Usage
 const analytics = new Analytics({
   apiUrl: "https://api.theniitettey.live/analytics",
   enableAutoPageView: true,
-  debug: false,
+  debug: true,
 });

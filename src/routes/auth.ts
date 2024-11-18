@@ -64,6 +64,7 @@ authRouter.post(
       res.status(200).json({
         message: "Login successful",
         user: { username },
+        token: token,
       });
     } catch (error) {
       const errorMessage =
