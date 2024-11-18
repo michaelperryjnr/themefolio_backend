@@ -85,7 +85,8 @@ class Analytics {
       path,
       sessionId: this.sessionId,
       userAgent: navigator.userAgent,
-      referrer: document.referrer,
+      referrer: document.referrer || "Self search",
+      ip: await this.getIpAddress(),
     });
   }
 
@@ -136,10 +137,20 @@ class Analytics {
 
     return device;
   }
+
+  private async getIpAddress(): Promise<string> {
+    return fetch("https://api.ipify.org?format=json")
+      .then((response) => response.json())
+      .then((data) => data.ip)
+      .catch(() => {
+        this.logDebug("Failed to fetch IP address:");
+        return "Unknown";
+      });
+  }
 }
 
 const analytics = new Analytics({
-  apiUrl: "https://api.thenittettey.live/analytics",
+  apiUrl: "https://api.theniitettey.live/analytics",
   enableAutoPageView: true,
   debug: false,
 });
