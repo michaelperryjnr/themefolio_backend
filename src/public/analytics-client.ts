@@ -199,6 +199,7 @@ class Analytics {
       userAgent: navigator.userAgent,
       referrer: document.referrer || "Direct",
       timestamp: currentTime,
+      ip: "User Protected",
     });
 
     this.queueEvent("event", {
