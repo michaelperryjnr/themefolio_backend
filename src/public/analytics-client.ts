@@ -245,8 +245,8 @@ class Analytics {
 const analytics = new Analytics({
   apiUrl: "https://api.theniitettey.live/analytics",
   enableAutoPageView: true,
-  debug: true,
-  batchSize: 10,
+  debug: false,
+  batchSize: 5,
   batchDelay: 1000,
 });
 
