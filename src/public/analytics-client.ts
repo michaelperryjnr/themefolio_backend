@@ -85,9 +85,11 @@ class Analytics {
   private queueEvent(endpoint: string, data: unknown): void {
     this.eventQueue.push({ endpoint, data });
 
+    // If the queue reaches the specified batch size, send the batch
     if (this.eventQueue.length >= this.batchSize) {
       this.processBatch();
     } else if (!this.batchTimeout) {
+      // Otherwise, wait for the batchDelay to expire before sending the batch
       this.batchTimeout = window.setTimeout(
         () => this.processBatch(),
         this.batchDelay
@@ -101,18 +103,26 @@ class Analytics {
       this.batchTimeout = null;
     }
 
-    const events = [...this.eventQueue];
-    this.eventQueue = [];
+    // If there are no events in the queue, do nothing
+    if (this.eventQueue.length === 0) return;
 
-    if (events.length === 0) return;
+    const events = [...this.eventQueue]; // Clone the queue for processing
+    this.eventQueue = []; // Clear the queue immediately, since we're processing it
+
+    // Create a single event with type "Batch" that contains all the queued events in the eventData
+    const batchEvent = {
+      sessionId: this.sessionId,
+      eventType: "Batch",
+      eventData: events.map((e) => e.data), // Add all events in the queue to eventData
+    };
 
     try {
-      await this.makeRequest(
-        "event",
-        events.map((e) => e.data)
-      );
+      // Send the batch as a single request to the server
+      await this.makeRequest("event", batchEvent);
+      this.logDebug(`Batch of ${events.length} events sent`, batchEvent);
     } catch (error) {
-      this.logDebug("Batch processing failed:", error);
+      this.logDebug("Failed to send batch:", error);
+      // If the batch fails, push the events back into the queue for retrying
       this.eventQueue.push(...events);
     }
   }

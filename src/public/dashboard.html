@@ -178,6 +178,7 @@
                                 <option value="Logout">Logout</option>
                                 <option value="Visited Page">Visits</option>
                                 <option value="Returning">Returning</option>
+                                <option value="Batch">Batch</option>
                             </select>
                             <button id="clearConsole"
                                 class="px-3 py-2 bg-red-500 text-white rounded-md hover:bg-red-600 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2">
@@ -260,7 +261,9 @@
                 case 'Visited Page':
                     return 'bg-red-100 text-red-800 dark:bg-red-800 dark:text-red-100';
                 case "Returning":
-                    return 'bg-cyan-100 text-cyan-800 dark:bg-cyan-800 dark:text-cyan-100'
+                    return 'bg-cyan-100 text-cyan-800 dark:bg-cyan-800 dark:text-cyan-100';
+                case "Batch":
+                    return 'bg-emerald-100 text-emerald-800 dark:bg-emerald-800 dark:text-emerald-100'
                 default:
                     return 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-100';
             }
@@ -276,6 +279,8 @@
                     return `Visit: ${log.eventData?.path} at ${log.eventData?.timestamp} from ${log.eventData?.previousPage} from ${log.eventData?.referrer}`;
                 case "Returning":
                     return `Returning: At ${log.eventData?.timestamp} since ${log.eventData?.timeSinceLastVisit} after ${log.eventData?.previousVisit} `
+                case "Batch":
+                    return `Batch: Data ${log.eventData?.map((data) => `${data.toString()} <br />`)}`
                 default:
                     return `Details: ${JSON.stringify(log.eventData)}`;
             }
