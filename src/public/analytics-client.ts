@@ -173,6 +173,12 @@ class Analytics {
 
     localStorage.setItem("lastEventTime", currentTime.toISOString());
     this.queueEvent("event", eventData);
+
+    try {
+      await this.makeRequest("event", eventData);
+    } catch (error) {
+      this.logDebug("Error", error);
+    }
   }
 
   private formatTimeDifference(timeDiff: number): string {
@@ -196,6 +202,16 @@ class Analytics {
     });
 
     await this.processBatch();
+
+    this,
+      this.makeRequest("event", {
+        sessionId: this.sessionId,
+        eventType: "Logout",
+        eventData: {
+          timestamp: currentTime,
+          lastPage: this.lastPageVisit,
+        },
+      });
   }
 
   public async trackPageVisit(path: string): Promise<void> {
@@ -222,6 +238,21 @@ class Analytics {
         referrer: document.referrer || "Direct",
       },
     });
+
+    try {
+      await this.makeRequest("event", {
+        sessionId: this.sessionId,
+        eventType: "Visited Page",
+        eventData: {
+          path,
+          timestamp: currentTime,
+          previousPage,
+          referrer: document.referrer || "Direct",
+        },
+      });
+    } catch (error) {
+      this.logDebug("Error", error);
+    }
   }
 
   private getBrowserInfo(): string {
