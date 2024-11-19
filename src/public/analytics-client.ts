@@ -1,291 +1,280 @@
-// import { randomBytes } from "crypto";
+interface DeviceInfo {
+  browser: string;
+  os: string;
+  device: string;
+}
 
-// interface DeviceInfo {
-//   browser: string;
-//   os: string;
-//   device: string;
-// }
+interface AnalyticsConfig {
+  apiUrl: string;
+  enableAutoPageView?: boolean;
+  debug?: boolean;
+  batchSize?: number;
+  batchDelay?: number;
+}
 
-// interface AnalyticsConfig {
-//   apiUrl: string;
-//   enableAutoPageView?: boolean;
-//   debug?: boolean;
-// }
+class Analytics {
+  private readonly apiUrl: string;
+  private readonly sessionId: string;
+  private readonly debug: boolean;
+  private readonly batchSize: number;
+  private readonly batchDelay: number;
+  private lastPageVisit: string | null = null;
+  private eventQueue: Array<{ endpoint: string; data: unknown }> = [];
+  private batchTimeout: number | null = null;
 
-// class Analytics {
-//   private readonly apiUrl: string;
-//   private readonly sessionId: string;
-//   private readonly debug: boolean;
+  constructor(config: AnalyticsConfig) {
+    this.apiUrl = config.apiUrl;
+    this.sessionId = this.generateSessionId();
+    this.debug = config.debug || false;
+    this.batchSize = config.batchSize || 10;
+    this.batchDelay = config.batchDelay || 1000;
 
-//   constructor(config: AnalyticsConfig) {
-//     this.apiUrl = config.apiUrl;
-//     this.sessionId = this.generateSessionId();
-//     this.debug = config.debug || false;
+    this.initSession();
 
-//     this.initSession();
+    if (config.enableAutoPageView) {
+      this.trackPageVisit(window.location.pathname);
+    }
+  }
 
-//     if (config.enableAutoPageView) {
-//       this.trackPageView();
-//     }
-//   }
+  private generateSessionId(): string {
+    return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(
+      /[xy]/g,
+      function (c) {
+        const r = (Math.random() * 16) | 0;
+        const v = c === "x" ? r : (r & 0x3) | 0x8;
+        return v.toString(16);
+      }
+    );
+  }
 
-//   private generateSessionId(): string {
-//     return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(
-//       /[xy]/g,
-//       (c: string) => {
-//         const r = (Math.random() * 16) | 0;
-//         const v = c === "x" ? r : (r & 0x3) | 0x8;
-//         return v.toString(16);
-//       }
-//     );
-//   }
+  private logDebug(...args: unknown[]): void {
+    if (this.debug) {
+      console.log("[Analytics]", ...args);
+    }
+  }
 
-//   // Log debug messages if enabled
-//   private logDebug(...args: unknown[]): void {
-//     if (this.debug) {
-//       console.log("[Analytics]", ...args);
-//     }
-//   }
+  private async makeRequest<T>(endpoint: string, data: T): Promise<void> {
+    try {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 5000);
 
-//   private async makeRequest<T>(endpoint: string, data: T): Promise<void> {
-//     try {
-//       const response = await fetch(`${this.apiUrl}/${endpoint}`, {
-//         method: "POST",
-//         headers: {
-//           "Content-Type": "application/json",
-//         },
-//         body: JSON.stringify(data),
-//       });
+      const response = await fetch(`${this.apiUrl}/${endpoint}`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(data),
+        signal: controller.signal,
+      });
 
-//       if (!response.ok) {
-//         throw new Error(`HTTP Error: ${response.statusText}`);
-//       }
+      clearTimeout(timeoutId);
 
-//       this.logDebug(`${endpoint} tracked successfully`);
-//     } catch (error) {
-//       this.logDebug(`Failed to track ${endpoint}:`, error);
-//       throw error;
-//     }
-//   }
+      if (!response.ok) {
+        throw new Error(
+          `HTTP Error: ${response.status} ${response.statusText}`
+        );
+      }
 
-//   private async initSession(): Promise<void> {
-//     const deviceInfo: DeviceInfo = {
-//       browser: this.getBrowserInfo(),
-//       os: this.getOsInfo(),
-//       device: this.getDeviceInfo(),
-//     };
+      this.logDebug(`${endpoint} tracked successfully`, data);
+    } catch (error) {
+      this.logDebug(`Failed to track ${endpoint}:`, error);
+      throw error;
+    }
+  }
 
-//     await this.makeRequest("session", {
-//       sessionId: this.sessionId,
-//       deviceInfo,
-//     });
+  private queueEvent(endpoint: string, data: unknown): void {
+    this.eventQueue.push({ endpoint, data });
 
-//     await this.trackLogin();
+    if (this.eventQueue.length >= this.batchSize) {
+      this.processBatch();
+    } else if (!this.batchTimeout) {
+      this.batchTimeout = window.setTimeout(
+        () => this.processBatch(),
+        this.batchDelay
+      );
+    }
+  }
 
-//     await this.trackReturn();
-//   }
+  private async processBatch(): Promise<void> {
+    if (this.batchTimeout) {
+      window.clearTimeout(this.batchTimeout);
+      this.batchTimeout = null;
+    }
 
-//   public async trackLogin(): Promise<void> {
-//     const currentTime = new Date().toISOString();
-//     const lastEventTime = localStorage.getItem("lastEventTime");
+    const events = [...this.eventQueue];
+    this.eventQueue = [];
 
-//     let timeDifference = "First visit";
-//     if (lastEventTime) {
-//       const lastEventDate = new Date(lastEventTime);
-//       const diffInMs = new Date().getTime() - lastEventDate.getTime();
-//       const diffInMinutes = Math.floor(diffInMs / (1000 * 60));
-//       const diffInHours = Math.floor(diffInMinutes / 60);
-//       const diffInDays = Math.floor(diffInHours / 24);
+    if (events.length === 0) return;
 
-//       timeDifference = `${diffInDays} days, ${diffInHours % 24} hours, ${
-//         diffInMinutes % 60
-//       } minutes`;
-//     }
+    try {
+      await this.makeRequest(
+        "event",
+        events.map((e) => e.data)
+      );
+    } catch (error) {
+      this.logDebug("Batch processing failed:", error);
+      this.eventQueue.push(...events);
+    }
+  }
 
-//     localStorage.setItem("lastEventTime", currentTime);
+  private async initSession(): Promise<void> {
+    const deviceInfo: DeviceInfo = {
+      browser: this.getBrowserInfo(),
+      os: this.getOsInfo(),
+      device: this.getDeviceInfo(),
+    };
 
-//     await this.makeRequest("event", {
-//       sessionId: this.sessionId,
-//       eventType: "Login",
-//       eventData: {
-//         timeDifference,
-//         isReturningUser: lastEventTime ? true : false,
-//       },
-//     });
+    await this.makeRequest("session", {
+      sessionId: this.sessionId,
+      deviceInfo,
+    });
 
-//     this.logDebug("Tracked login event.");
-//   }
+    this.trackLogin();
+  }
 
-//   public async trackLogout(): Promise<void> {
-//     const currentTime = new Date().toISOString();
-//     const lastEventTime = localStorage.getItem("lastEventTime");
+  public async trackLogin(): Promise<void> {
+    const currentTime = new Date();
+    const lastEventTime = localStorage.getItem("lastEventTime");
 
-//     let timeDifference = "First visit";
-//     if (lastEventTime) {
-//       const lastEventDate = new Date(lastEventTime);
-//       const diffInMs = new Date().getTime() - lastEventDate.getTime();
-//       const diffInMinutes = Math.floor(diffInMs / (1000 * 60));
-//       const diffInHours = Math.floor(diffInMinutes / 60);
-//       const diffInDays = Math.floor(diffInHours / 24);
+    const eventData = {
+      sessionId: this.sessionId,
+      eventType: "Login",
+      eventData: {
+        timestamp: currentTime.toISOString(),
+        isReturningUser: Boolean(lastEventTime),
+        previousVisit: lastEventTime || null,
+      },
+    };
 
-//       timeDifference = `${diffInDays} days, ${diffInHours % 24} hours, ${
-//         diffInMinutes % 60
-//       } minutes`;
-//     }
+    if (lastEventTime) {
+      const lastDate = new Date(lastEventTime);
+      const timeDiff = currentTime.getTime() - lastDate.getTime();
 
-//     localStorage.setItem("lastEventTime", currentTime);
+      this.queueEvent("event", {
+        sessionId: this.sessionId,
+        eventType: "Returning",
+        eventData: {
+          timestamp: currentTime.toISOString(),
+          timeSinceLastVisit: this.formatTimeDifference(timeDiff),
+          previousVisit: lastEventTime,
+        },
+      });
+    }
 
-//     await this.makeRequest("event", {
-//       sessionId: this.sessionId,
-//       eventType: "Logout",
-//       eventData: {
-//         timeDifference,
-//         isReturningUser: lastEventTime ? true : false,
-//       },
-//     });
+    localStorage.setItem("lastEventTime", currentTime.toISOString());
+    this.queueEvent("event", eventData);
+  }
 
-//     this.logDebug("Tracked logout event.");
-//   }
+  private formatTimeDifference(timeDiff: number): string {
+    const minutes = Math.floor(timeDiff / (1000 * 60));
+    const hours = Math.floor(minutes / 60);
+    const days = Math.floor(hours / 24);
 
-//   public async trackPageVisit(path: string = "/unknown"): Promise<void> {
-//     try {
-//       const ip = await this.getIpAddress();
-//       await this.makeRequest("event", {
-//         sessionId: this.sessionId,
-//         eventType: "Visit Page",
-//         eventData: {
-//           path,
-//           userAgent:
-//             typeof navigator !== "undefined" ? navigator.userAgent : "Unknown",
-//           referrer: document.referrer || "Direct",
-//           ip,
-//         },
-//       });
+    return `${days} days, ${hours % 24} hours, ${minutes % 60} minutes`;
+  }
 
-//       this.logDebug("Tracked page visit event.");
-//     } catch (error) {
-//       this.logDebug("Error tracking page visit:", error);
-//     }
-//   }
+  public async trackLogout(): Promise<void> {
+    const currentTime = new Date().toISOString();
 
-//   public async trackReturn(): Promise<void> {
-//     const lastEventTime = localStorage.getItem("lastEventTime");
-//     const currentTime = new Date().toISOString();
+    this.queueEvent("event", {
+      sessionId: this.sessionId,
+      eventType: "Logout",
+      eventData: {
+        timestamp: currentTime,
+        lastPage: this.lastPageVisit,
+      },
+    });
 
-//     let timeDifference = "First visit";
-//     if (lastEventTime) {
-//       const lastEventDate = new Date(lastEventTime);
-//       const diffInMs = new Date().getTime() - lastEventDate.getTime();
-//       const diffInMinutes = Math.floor(diffInMs / (1000 * 60));
-//       const diffInHours = Math.floor(diffInMinutes / 60);
-//       const diffInDays = Math.floor(diffInHours / 24);
+    await this.processBatch();
+  }
 
-//       timeDifference = `${diffInDays} days, ${diffInHours % 24} hours, ${
-//         diffInMinutes % 60
-//       } minutes`;
-//     }
+  public async trackPageVisit(path: string): Promise<void> {
+    const currentTime = new Date().toISOString();
+    const previousPage = this.lastPageVisit;
+    this.lastPageVisit = path;
 
-//     if (lastEventTime) {
-//       await this.makeRequest("event", {
-//         sessionId: this.sessionId,
-//         eventType: "Return",
-//         eventData: {
-//           timeDifference,
-//           isReturningUser: true,
-//         },
-//       });
+    await this.makeRequest("page-view", {
+      path,
+      sessionId: this.sessionId,
+      userAgent: navigator.userAgent,
+      referrer: document.referrer || "Direct",
+      timestamp: currentTime,
+    });
 
-//       this.logDebug("Tracked return event.");
-//     }
-//   }
+    this.queueEvent("event", {
+      sessionId: this.sessionId,
+      eventType: "Visited Page",
+      eventData: {
+        path,
+        timestamp: currentTime,
+        previousPage,
+        referrer: document.referrer || "Direct",
+      },
+    });
+  }
 
-//   private async trackPageView(
-//     path: string = typeof window !== "undefined"
-//       ? window.location.pathname
-//       : "/unknown"
-//   ): Promise<void> {
-//     try {
-//       const ip = await this.getIpAddress();
-//       await this.makeRequest("page-view", {
-//         path,
-//         sessionId: this.sessionId,
-//         userAgent:
-//           typeof navigator !== "undefined" ? navigator.userAgent : "Unknown",
-//         referrer: document.referrer || "Direct",
-//         ip,
-//       });
-//     } catch (error) {
-//       this.logDebug("Error tracking page view:", error);
-//     }
-//   }
+  private getBrowserInfo(): string {
+    const ua = navigator.userAgent;
+    if (ua.includes("Firefox")) return "Firefox";
+    if (ua.includes("Chrome")) return "Chrome";
+    if (ua.includes("Safari")) return "Safari";
+    if (ua.includes("Edge")) return "Edge";
+    if (ua.includes("MSIE") || ua.includes("Trident/7"))
+      return "Internet Explorer";
+    return "Unknown";
+  }
 
-//   private getBrowserInfo(): string {
-//     const ua = navigator.userAgent;
-//     let browser = "Unknown";
+  private getOsInfo(): string {
+    const ua = navigator.userAgent;
+    if (ua.includes("Windows")) return "Windows";
+    if (ua.includes("Macintosh")) return "MacOS";
+    if (ua.includes("Linux")) return "Linux";
+    if (ua.includes("Android")) return "Android";
+    if (ua.includes("iOS")) return "iOS";
+    return "Unknown";
+  }
 
-//     if (ua.includes("Firefox")) browser = "Firefox";
-//     else if (ua.includes("Chrome")) browser = "Chrome";
-//     else if (ua.includes("Safari")) browser = "Safari";
-//     else if (ua.includes("Edge")) browser = "Edge";
-//     else if (ua.includes("MSIE") || ua.includes("Trident/7"))
-//       browser = "Internet Explorer";
+  private getDeviceInfo(): string {
+    const ua = navigator.userAgent;
+    if (ua.includes("Mobile")) return "Mobile";
+    if (ua.includes("Tablet")) return "Tablet";
+    return "Desktop";
+  }
+}
 
-//     return browser;
-//   }
+const analytics = new Analytics({
+  apiUrl: "https://api.theniitettey.live/analytics",
+  enableAutoPageView: true,
+  debug: true,
+  batchSize: 10,
+  batchDelay: 1000,
+});
 
-//   private getOsInfo(): string {
-//     const ua = navigator.userAgent;
-//     let os = "Unknown";
+window.addEventListener("visibilitychange", () => {
+  if (document.visibilityState === "hidden") {
+    analytics.trackLogout();
+  }
+});
 
-//     if (ua.includes("Windows")) os = "Windows";
-//     else if (ua.includes("Macintosh")) os = "MacOS";
-//     else if (ua.includes("Linux")) os = "Linux";
-//     else if (ua.includes("Android")) os = "Android";
-//     else if (ua.includes("iOS")) os = "iOS";
+let pageVisitTimeout: number;
+function debouncedTrackPageVisit(path: string): void {
+  window.clearTimeout(pageVisitTimeout);
+  pageVisitTimeout = window.setTimeout(() => {
+    analytics.trackPageVisit(path);
+  }, 300);
+}
 
-//     return os;
-//   }
+window.addEventListener("popstate", () => {
+  debouncedTrackPageVisit(window.location.pathname);
+});
 
-//   private getDeviceInfo(): string {
-//     const ua = navigator.userAgent;
-//     let device = "Desktop";
+window.addEventListener("hashchange", () => {
+  debouncedTrackPageVisit(window.location.pathname);
+});
 
-//     if (ua.includes("Mobile")) device = "Mobile";
-//     else if (ua.includes("Tablet")) device = "Tablet";
-
-//     return device;
-//   }
-
-//   private async getIpAddress(): Promise<string> {
-//     return `User-Protected-IP-x.x.x.x`;
-//   }
-// }
-
-// const analytics = new Analytics({
-//   apiUrl: "https://api.theniitettey.live/analytics",
-//   enableAutoPageView: true,
-//   debug: false,
-// });
-
-// window.addEventListener("beforeunload", async () => {
-//   await analytics.trackLogout();
-// });
-
-// window.addEventListener("load", async () => {
-//   await analytics.trackLogin();
-// });
-
-// window.addEventListener("popstate", async () => {
-//   await analytics.trackPageVisit(window.location.pathname);
-// });
-
-// window.addEventListener("hashchange", async () => {
-//   await analytics.trackPageVisit(window.location.pathname);
-// });
-
-// window.addEventListener("click", async (event) => {
-//   if (event.target instanceof HTMLAnchorElement) {
-//     await analytics.trackPageVisit(event.target.href);
-//   }
-// });
-// //
+window.addEventListener("click", (event) => {
+  const link = (event.target as Element).closest("a");
+  if (link instanceof HTMLAnchorElement) {
+    debouncedTrackPageVisit(link.href);
+  }
+});
