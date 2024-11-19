@@ -491,8 +491,8 @@
         function updateDashboard(data) {
             // Ensure data has expected structure with defaults
             const sanitizedData = {
-                totalPageViews: data.totalPageViews || 0,
-                totalSessions: data.totalSessions || 0,
+                totalPageViews: data.allPageViews || 0,
+                totalSessions: data.allSessions || 0,
                 averageSessionDuration: data.averageSessionDuration || 0,
                 totalEvents: data.totalEvents.length || 0,
                 pageViewsOverTime: data.pageViewsOverTime || [],

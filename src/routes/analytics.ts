@@ -132,13 +132,17 @@ analyticsRouter.get(
         const allEvents = await EventModel.find();
 
         analytics = {
+          allPageViews: allPageViews.length,
           popularPages: aggregatePopularPages(allPageViews),
+          allSessions: allSessions.length,
           averageSessionDuration: calculateAverageSessionDuration(allSessions),
           totalEvents: allEvents,
         };
       } else {
         analytics = {
+          allPageViews: pageViews.length,
           popularPages: aggregatePopularPages(pageViews),
+          allSessions: sessions.length,
           averageSessionDuration: calculateAverageSessionDuration(sessions),
           totalEvents: events,
         };
