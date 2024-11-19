@@ -145,11 +145,169 @@
                         <canvas id="popularPagesChart"></canvas>
                     </div>
                 </div>
+
+
+            </div>
+
+            <div class="bg-white dark:bg-dark-card rounded-lg shadow mt-4">
+                <div class="p-4 border-b border-gray-200 dark:border-gray-600 flex justify-between items-center">
+                    <div class="flex items-center space-x-2">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                            <path fill-rule="evenodd"
+                                d="M2 5a2 2 0 012-2h12a2 2 0 012 2v10a2 2 0 01-2 2H4a2 2 0 01-2-2V5zm3.293 1.293a1 1 0 011.414 0l3 3a1 1 0 010 1.414l-3 3a1 1 0 01-1.414-1.414L7.586 10 5.293 7.707a1 1 0 010-1.414z"
+                                clip-rule="evenodd" />
+                        </svg>
+                        <h3 class="text-lg font-medium text-gray-900 dark:text-dark-text">Event Console</h3>
+                    </div>
+                    <button id="toggleConsole"
+                        class="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                            <path
+                                d="M5 12a1 1 0 102 0V6.414l1.293 1.293a1 1 0 001.414-1.414l-3-3a1 1 0 00-1.414 0l-3 3a1 1 0 001.414 1.414L5 6.414V12zM15 8a1 1 0 10-2 0v5.586l-1.293-1.293a1 1 0 00-1.414 1.414l3 3a1 1 0 001.414 0l3-3a1 1 0 00-1.414-1.414L15 13.586V8z" />
+                        </svg>
+                    </button>
+                </div>
+
+                <div id="eventConsole" class="hidden">
+                    <div class="p-4 border-b border-gray-200 dark:border-gray-600">
+                        <div class="flex space-x-4">
+                            <select id="eventTypeFilter"
+                                class="rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                                <option value="all">All Events</option>
+                                <option value="Login">Login</option>
+                                <option value="Logout">Logout</option>
+                                <option value="Visited Page">Visits</option>
+                                <option value="Returning">Returning</option>
+                            </select>
+                            <button id="clearConsole"
+                                class="px-3 py-2 bg-red-500 text-white rounded-md hover:bg-red-600 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2">
+                                Clear Console
+                            </button>
+                        </div>
+                    </div>
+
+                    <div id="eventLogs" class="p-4 max-h-96 overflow-auto space-y-2">
+                        <!-- Event logs will be inserted here -->
+                    </div>
+                </div>
             </div>
         </main>
     </div>
 
     <script>
+
+        let eventLogs = [];
+        let eventFilter = 'all';
+
+        // Toggle console visibility
+        document.getElementById('toggleConsole').addEventListener('click', () => {
+            const console = document.getElementById('eventConsole');
+            console.classList.toggle('hidden');
+        });
+
+        // Event type filter
+        document.getElementById('eventTypeFilter').addEventListener('change', (e) => {
+            eventFilter = e.target.value;
+            renderEventLogs();
+        });
+
+        // Clear console
+        document.getElementById('clearConsole').addEventListener('click', () => {
+            eventLogs = [];
+            renderEventLogs();
+        });
+
+        function addEventLog(event) {
+            eventLogs.unshift(event); // Add to beginning of array
+            if (eventLogs.length > 100) eventLogs.pop(); // Keep only last 100 events
+            renderEventLogs();
+        }
+
+        function renderEventLogs() {
+            const logsContainer = document.getElementById('eventLogs');
+            const filteredLogs = eventFilter === 'all'
+                ? eventLogs
+                : eventLogs.filter(log => log.eventType === eventFilter);
+
+            logsContainer.innerHTML = filteredLogs.map(log => `
+                <div class="flex items-start space-x-4 p-2 rounded ${isDark ? 'bg-gray-800' : 'bg-gray-50'}">
+                    <div class="min-w-[160px] text-sm text-gray-500">
+                        ${new Date(log.timestamp).toLocaleString()}
+                    </div>
+                    <div class="flex-1">
+                        <span class="inline-block px-2 py-1 text-xs rounded ${getEventTypeClass(log.eventType)}">
+                            ${log.eventType}
+                        </span>
+                        <div class="mt-1 text-sm text-gray-200">
+                            ${getEventDetails(log)}
+                        </div>
+                        ${log.sessionId ? `
+                            <div class="text-xs text-gray-500">
+                                Session ID: ${log.sessionId}
+                            </div>
+                        ` : ''}
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function getEventTypeClass(type) {
+            switch (type) {
+                case 'Login':
+                    return 'bg-blue-100 text-blue-800 dark:bg-blue-800 dark:text-blue-100';
+                case 'Logout':
+                    return 'bg-green-100 text-green-800 dark:bg-green-800 dark:text-green-100';
+                case 'Visited Page':
+                    return 'bg-red-100 text-red-800 dark:bg-red-800 dark:text-red-100';
+                case "Returning":
+                    return 'bg-cyan-100 text-cyan-800 dark:bg-cyan-800 dark:text-cyan-100'
+                default:
+                    return 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-100';
+            }
+        }
+
+        function getEventDetails(log) {
+            switch (log.eventType) {
+                case 'Login':
+                    return `Login: At ${log.eventData?.timestamp}, after ${log.eventData?.timeSinceLastVisit || "this is first"} which was ${log.eventData?.previousVisit}, returning: ${log.eventData?.isReturningUser}`;
+                case 'Logout':
+                    return `Logout: At ${log.eventData?.timestamp}, page: ${log.eventData?.lastPage}`;
+                case 'Visited Page':
+                    return `Visit: ${log.eventData?.path} at ${log.eventData?.timestamp} from ${log.eventData?.previousPage} from ${log.eventData?.referrer}`;
+                case "Returning":
+                    return `Returning: At ${log.eventData?.timestamp} since ${log.eventData?.timeSinceLastVisit} after ${log.eventData?.previousVisit} `
+                default:
+                    return `Details: ${JSON.stringify(log.eventData)}`;
+            }
+        }
+
+        // Example of how to add events
+        // window.addEventListener('click', (e) => {
+        //  addEventLog({
+        //    type: 'click',
+        //  timestamp: new Date().toISOString(),
+        // element: e.target.tagName.toLowerCase() + (e.target.id ? `#${e.target.id}` : ''),
+        // userId: localStorage.getItem('username')
+        //});
+        //}); 
+
+        // Track page views
+        function logPageView() {
+            addEventLog({
+                eventType: 'Visited Page',
+                timestamp: new Date().toISOString(),
+                eventData: {
+                    path: window.location.pathname,
+                    timestamp: new Date().toLocaleDateString(),
+                    previousPage: "None",
+                    referrer: "Default: None",
+                },
+                sessionId: "Admin Session"
+            });
+        }
+
+
+
         let token = localStorage.getItem('analyticsToken');
         let pageViewsChart = null;
         let popularPagesChart = null;
@@ -231,29 +389,8 @@
             showLoginScreen();
         });
 
-        document.getElementById('updateDateRange').addEventListener('click', loadAnalyticsData);
-
-        // Add window resize handler for responsive charts
-        let resizeTimeout;
-        window.addEventListener('resize', () => {
-            clearTimeout(resizeTimeout);
-            resizeTimeout = setTimeout(() => {
-                if (pageViewsChart) loadAnalyticsData();
-            }, 250);
-        });
-
-        function showDashboard() {
-            document.getElementById('loginScreen').classList.add('hidden');
-            document.getElementById('dashboard').classList.remove('hidden');
-            // Set up automatic refresh every 5 minutes
-            setInterval(loadAnalyticsData, 5 * 60 * 1000);
-        }
-
-        function showLoginScreen() {
-            document.getElementById('dashboard').classList.add('hidden');
-            document.getElementById('loginScreen').classList.remove('hidden');
-        }
-        async function loadAnalyticsData() {
+        // First, store the original function
+        const originalLoadAnalyticsData = async function () {
             try {
                 const startDate = document.getElementById('startDate').value ||
                     new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
@@ -275,6 +412,7 @@
                     const data = await response.json();
                     console.log('Analytics data:', data);
                     updateDashboard(data);
+                    eventLogs = data.totalEvents
                     return;
                 }
 
@@ -290,7 +428,46 @@
                 console.error('Failed to load analytics data:', error);
                 showError('Failed to load analytics data. Please try again.');
             }
+        };
+
+
+        document.getElementById('updateDateRange').addEventListener('click', originalLoadAnalyticsData);
+
+        // Add window resize handler for responsive charts
+        let resizeTimeout;
+        window.addEventListener('resize', () => {
+            clearTimeout(resizeTimeout);
+            resizeTimeout = setTimeout(() => {
+                if (pageViewsChart) loadAnalyticsData();
+            }, 250);
+        });
+
+        function showDashboard() {
+            document.getElementById('loginScreen').classList.add('hidden');
+            document.getElementById('dashboard').classList.remove('hidden');
+            logPageView();
+            setInterval(originalLoadAnalyticsData, 5 * 60 * 1000);
         }
+
+        function showLoginScreen() {
+            document.getElementById('dashboard').classList.add('hidden');
+            document.getElementById('loginScreen').classList.remove('hidden');
+        }
+
+        // Then replace it with the wrapped version that includes error logging
+        loadAnalyticsData = async function () {
+            try {
+                await originalLoadAnalyticsData();
+            } catch (error) {
+                addEventLog({
+                    type: 'error',
+                    timestamp: new Date().toISOString(),
+                    message: error.message,
+                    userId: localStorage.getItem('username')
+                });
+                throw error;
+            }
+        };
 
         // Helper function to show errors
         function showError(message) {
@@ -312,7 +489,7 @@
                 totalPageViews: data.totalPageViews || 0,
                 totalSessions: data.totalSessions || 0,
                 averageSessionDuration: data.averageSessionDuration || 0,
-                totalEvents: data.totalEvents || 0,
+                totalEvents: data.totalEvents.length || 0,
                 pageViewsOverTime: data.pageViewsOverTime || [],
                 popularPages: Array.isArray(data.popularPages) ? data.popularPages : []
             };

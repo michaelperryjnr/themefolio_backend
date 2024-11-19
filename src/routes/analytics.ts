@@ -134,13 +134,13 @@ analyticsRouter.get(
         analytics = {
           popularPages: aggregatePopularPages(allPageViews),
           averageSessionDuration: calculateAverageSessionDuration(allSessions),
-          totalEvents: allEvents.length,
+          totalEvents: allEvents,
         };
       } else {
         analytics = {
           popularPages: aggregatePopularPages(pageViews),
           averageSessionDuration: calculateAverageSessionDuration(sessions),
-          totalEvents: events.length,
+          totalEvents: events,
         };
       }
       res.status(200).json(analytics);
